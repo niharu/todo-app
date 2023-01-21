@@ -3,12 +3,12 @@
     {
       "content": "test",
       "id": "01GQ3XECWQJDBYSEQ678GNJNGX",
-      "done": false
+      "done": true
     },
     {
       "content": "test2",
       "id": "01GQ3XEEXVNV0M70574T7MZP3G",
-      "done": true
+      "done": false
     }
   ]
 }

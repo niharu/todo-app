@@ -17,8 +17,8 @@ export const TodoItem = ({
 
   const handleDeleteTodoListItem = () => deleteTodoListItem(todo.id);
 
-  const label: String = todo.done ? "未完了リストへ" : "完了リストへ";
-  const setColorScheme: ThemingProps = todo.done ? "pink" : "blue";
+  const label: string = todo.done ? "未完了リストへ" : "完了リストへ";
+  const buttonColor: string = todo.done ? "pink" : "blue";
 
   return (
     <ListItem
@@ -32,7 +32,7 @@ export const TodoItem = ({
       <Text mb="6">{todo.content}</Text>
       <Flex align="center" justify="flex-end">
         <Button
-          colorScheme={setColorScheme}
+          colorScheme={buttonColor}
           variant="outline"
           size="sm"
           onClick={handleToggleTodoListItemStatus}
