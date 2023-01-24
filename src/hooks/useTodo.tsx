@@ -15,7 +15,8 @@ export const useTodo = () => {
   }, []);
 
   const toggleTodoListItemStatus = (id: string, done: boolean) => {
-    const todoItem: Todo = todoList.find((item) => item.id === id);
+    const todoItem: Todo | undefined = todoList.find((item) => item.id === id);
+    if (!todoItem) return;
 
     const newTodoItem: Todo = { ...todoItem, done: !done };
 
@@ -28,7 +29,7 @@ export const useTodo = () => {
     });
   };
 
-  const addTodoListItem = (todoContent) => {
+  const addTodoListItem = (todoContent: string) => {
     const newTodoItem = {
       content: todoContent,
       id: ulid(),
@@ -40,7 +41,7 @@ export const useTodo = () => {
     });
   };
 
-  const deleteTodoListItem = (id) => {
+  const deleteTodoListItem = (id: string) => {
     todoData.deleteTodoData(id).then((deleteListItemId) => {
       const newTodoList = todoList.filter(
         (item) => item.id !== deleteListItemId

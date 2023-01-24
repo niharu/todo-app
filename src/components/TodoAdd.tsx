@@ -4,7 +4,7 @@ type Props = {
   leftIcon: React.ReactElement;
   buttonText: string;
   inputEl: React.RefObject<HTMLTextAreaElement>;
-  handleAddTodoListItem: () => boolean;
+  handleAddTodoListItem: () => void;
 };
 export const TodoAdd = ({
   placeholder,

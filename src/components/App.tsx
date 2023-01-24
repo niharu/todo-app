@@ -16,12 +16,13 @@ function App() {
     deleteTodoListItem,
   } = useTodo();
 
-  const inputEl = useRef(null);
+  const inputEl = useRef<HTMLTextAreaElement>(null);
 
   const handleAddTodoListItem = () => {
-    if (inputEl.current.value === "") return;
+    const inputValue = inputEl.current?.value;
+    if (!inputValue) return;
 
-    addTodoListItem(inputEl.current.value);
+    addTodoListItem(inputValue);
     inputEl.current.value = "";
   };
 
@@ -35,7 +36,7 @@ function App() {
 
   return (
     <Container centerContent p={{ base: "4", md: "6" }} maxWidth="3xl">
-      <TodoTitle title="TODO進捗管理" fontSize="2xl" />
+      <TodoTitle title="TODO進捗管理" fontSize="2xl" mt="0" />
 
       <TodoAdd
         placeholder="ADD TODO"
