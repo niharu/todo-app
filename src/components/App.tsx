@@ -1,5 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 
+import * as lodash from "lodash";
+
+import { ulid } from "ulid";
+
 import {
   Button,
   Container,
@@ -26,141 +30,89 @@ function App() {
     deleteTodoListItem,
   } = useTodo();
 
-  const [menuList, setMenuList] = useState<Menu[]>([]);
-
   useEffect(() => {
     menusData.getAllMenus().then((menus: Menu[]) => {
       setMenuList(menus);
-      console.log("API GET menus: 1", menus[0].isDiscounted);
-      console.log("API GET menus: 2", menus[1].isDiscounted);
-      console.log("API GET menus: 3", menus[2].isDiscounted);
-      console.log("API GET menus: 4", menus[3].isDiscounted);
+      // console.log("API GET menus: 1", menus[0].isDiscounted);
+      // console.log("API GET menus: 2", menus[1].isDiscounted);
+      // console.log("API GET menus: 3", menus[2].isDiscounted);
+      // console.log("API GET menus: 4", menus[3].isDiscounted);
     });
   }, []);
+
+  const [menuList, setMenuList] = useState<Menu[]>([]);
 
   const [gachaList, setGachaList] = useState<Menu[]>([]);
 
   const [totalPrice, setTotalPrice] = useState<number>();
 
   const handleTurnGacha = () => {
-    // console.log("menuList ボタン押下直後:", menuList);
+    const BUDGET_LIMIT: number = 1000;
+
     let total: number = 0;
 
-    const minPrice: number = Math.min(
-      ...menuList.map((menu: Menu) => menu.price)
-    );
+    let singleMenuGachaList: Menu[] = [];
+    const mealMenuGachaList: Menu[] = [];
 
-    var gachaList: Menu[] = [];
-
-    // console.log("menuList isDicounted設定前:", menuList);
-    menuList.forEach((menu) => (menu.isDiscounted = false));
-    // console.log("menuList isDicounted設定後:", menuList);
-
-    do {
-      console.log("=================================================");
-      console.log("=================================================");
+    while (total < BUDGET_LIMIT) {
+      // 残金
+      const remaining = BUDGET_LIMIT - total;
 
       // メニューリストから、残りの金額で買えるものだけに絞る
-      const filteredMenuList = [...menuList].filter(
-        (menu: Menu) => menu.price <= 1000 - total
-      );
-      // console.log("filteredMenuList:", filteredMenuList);
-      console.log("filteredMenuList");
-      filteredMenuList.forEach((gacha) =>
-        console.log(
-          "id:",
-          gacha.id,
-          "name:",
-          gacha.name,
-          "isDiscounted:",
-          gacha.isDiscounted
-        )
+      // TODO: 値引きすれば買える可能性が考慮できていない
+      const purchasableMenus = [...menuList].filter(
+        (menu: Menu) => menu.price <= remaining
       );
 
       // 残りの金額で買えるものがなくなったら終了
-      if (filteredMenuList.length === 0) break;
+      if (purchasableMenus.length === 0) break;
 
-      const listLength = filteredMenuList.length;
-      const randomNum = Math.floor(Math.random() * listLength);
+      // 購入可能なものから、ランダムに１つ選ぶ
+      const randomIndex = Math.floor(Math.random() * purchasableMenus.length);
+      const gachaMenu = lodash.cloneDeep(purchasableMenus[randomIndex]);
+      gachaMenu.uuid = ulid();
 
-      const gachaMenu = filteredMenuList[randomNum];
+      // 選ばれたメニューの金額
       const price = gachaMenu.price;
 
-      // console.log("ガチャの結果：", gachaMenu);
-
-      // 値引きが設定されていて、かつまだ値引きをしていないメニューを取得
-      const discountFoodMenu = [...gachaList, gachaMenu].filter(
-        (menu: Menu) => !menu.isDiscounted && menu.drinkDiscount > 0
+      // ガチャで選ばれた単品メニューから、値引き可能なフードを取得
+      const discountFoodMenu = [...singleMenuGachaList, gachaMenu].filter(
+        (menu: Menu) => menu.drinkDiscount > 0
       )[0];
 
-      // まだ値引きをしていないドリンクを取得
-      const discountDrinkMenu = [...gachaList, gachaMenu].filter(
+      // ガチャで選ばれた単品メニューから、ドリンクを取得
+      const discountDrinkMenu = [...singleMenuGachaList, gachaMenu].filter(
         (menu: Menu) =>
-          !menu.isDiscounted &&
-          (menu.category === "hotdrink" || menu.category === "icedrink")
+          menu.category === "hotdrink" || menu.category === "icedrink"
       )[0];
 
-      // console.log("discountFoodMenu:", discountFoodMenu);
-      // console.log("discountDrinkMenu:", discountDrinkMenu);
-
-      // 値引き可能なセットが揃っている場合、値引きを行う
       if (discountDrinkMenu && discountFoodMenu) {
-        // console.log(discountFoodMenu.drinkDiscount, "円の値引きをしました！");
+        // 値引き可能なセットが揃っている場合、値引きを行う
         total -= discountFoodMenu.drinkDiscount;
+
+        // セットメニューのリストに追加
+        mealMenuGachaList.push(discountFoodMenu);
+        mealMenuGachaList.push(discountDrinkMenu);
+
+        // 単品メニューのリストから削除
+        singleMenuGachaList = singleMenuGachaList.filter(
+          (menu: Menu) =>
+            menu.uuid !== discountFoodMenu.uuid &&
+            menu.uuid !== discountDrinkMenu.uuid
+        );
+      } else {
+        // セットが揃わなかったら、単品として追加
+        singleMenuGachaList.push(gachaMenu);
       }
 
-      // 1000を超える場合は終了
-      if (total + price > 1000) break;
+      // BUDGET_LIMIT を超える場合は終了（値引き後に判定する必要がある）
+      if (total + price > BUDGET_LIMIT) break;
 
+      // 合計金額に加算
       total += price;
-      gachaList.push({ ...gachaMenu });
+    }
 
-      // 値引き可能なセットが揃っている場合、値引きを行ったことを設定する
-      // （gachaMenuがリストに追加されてから設定する方が実装上楽なのでこのタイミングで実施）
-      if (discountDrinkMenu && discountFoodMenu) {
-        console.log("isDicounted設定前");
-        gachaList.forEach((gacha) =>
-          console.log(
-            "id:",
-            gacha.id,
-            "name:",
-            gacha.name,
-            "isDiscounted:",
-            gacha.isDiscounted
-          )
-        );
-
-        gachaList.filter(
-          (menu: Menu) => menu.id === discountDrinkMenu.id
-        )[0].isDiscounted = true;
-
-        const targetDrinkIndex = gachaList.indexOf(discountDrinkMenu);
-        gachaList.splice(targetDrinkIndex, 1);
-        gachaList.unshift(discountDrinkMenu);
-
-        gachaList.filter(
-          (menu: Menu) => menu.id === discountFoodMenu.id
-        )[0].isDiscounted = true;
-
-        const targetFoodIndex = gachaList.indexOf(discountFoodMenu);
-        gachaList.splice(targetFoodIndex, 1);
-        gachaList.unshift(discountFoodMenu);
-
-        console.log("isDicounted設定後");
-        gachaList.forEach((gacha) =>
-          console.log(
-            "id:",
-            gacha.id,
-            "name:",
-            gacha.name,
-            "isDiscounted:",
-            gacha.isDiscounted
-          )
-        );
-      }
-    } while (total < 1000);
-
-    setGachaList(gachaList);
+    setGachaList([...mealMenuGachaList, ...singleMenuGachaList]);
     setTotalPrice(total);
   };
 
@@ -215,22 +167,21 @@ function App() {
         <Text>合計金額：{totalPrice}</Text>
         <List w="full">
           {gachaList.map((menu: Menu) => (
-            <>
-              <ListItem
-                borderWidth="1px"
-                p="4"
-                mt="4"
-                bg="white"
-                borderRadius="md"
-                borderColor="gray.300"
-                backgroundColor="#fbd24d"
-              >
-                <Text color="#3d2900">
-                  {menu.name} size:{menu.size}
-                </Text>
-                <Text>{menu.price}</Text>
-              </ListItem>
-            </>
+            <ListItem
+              key={menu.uuid}
+              borderWidth="1px"
+              p="4"
+              mt="4"
+              bg="white"
+              borderRadius="md"
+              borderColor="gray.300"
+              backgroundColor="#fbd24d"
+            >
+              <Text color="#3d2900">
+                {menu.name} size:{menu.size}
+              </Text>
+              <Text>{menu.price}</Text>
+            </ListItem>
           ))}
         </List>
       </>

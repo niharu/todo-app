@@ -6,5 +6,5 @@ export type Menu = {
   size: string;
   drinkDiscount: number;
   isMorningSet: boolean;
-  isDiscounted: boolean;
+  uuid: string;
 };
