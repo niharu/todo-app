@@ -1,15 +1,24 @@
 import React, { useRef, useEffect, useState } from "react";
 
+import { IconContext } from "react-icons";
+import { BsCup, BsCupStraw } from "react-icons/bs";
+import { FiCoffee } from "react-icons/fi";
+
 import * as lodash from "lodash";
 
 import { ulid } from "ulid";
 
 import {
+  Box,
   Button,
+  Center,
   Container,
   Heading,
+  HStack,
   List,
   ListItem,
+  Spacer,
+  Stack,
   Text,
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
@@ -33,16 +42,13 @@ function App() {
   useEffect(() => {
     menusData.getAllMenus().then((menus: Menu[]) => {
       setMenuList(menus);
-      // console.log("API GET menus: 1", menus[0].isDiscounted);
-      // console.log("API GET menus: 2", menus[1].isDiscounted);
-      // console.log("API GET menus: 3", menus[2].isDiscounted);
-      // console.log("API GET menus: 4", menus[3].isDiscounted);
     });
   }, []);
 
   const [menuList, setMenuList] = useState<Menu[]>([]);
 
-  const [gachaList, setGachaList] = useState<Menu[]>([]);
+  const [singleMenuGachaList, setSingleMenuGachaList] = useState<Menu[]>([]);
+  const [mealMenuGachaList, setMealMenuGachaList] = useState<Menu[][]>([]);
 
   const [totalPrice, setTotalPrice] = useState<number>();
 
@@ -59,13 +65,60 @@ function App() {
       const remaining = BUDGET_LIMIT - total;
 
       // メニューリストから、残りの金額で買えるものだけに絞る
-      // TODO: 値引きすれば買える可能性が考慮できていない
       const purchasableMenus = [...menuList].filter(
         (menu: Menu) => menu.price <= remaining
       );
 
-      // 残りの金額で買えるものがなくなったら終了
-      if (purchasableMenus.length === 0) break;
+      // 残りの金額で買えるものがない
+      if (!purchasableMenus.length) {
+        // 単品メニューが無い場合、割引は出来ないので終了する
+        if (!singleMenuGachaList.length) break;
+
+        // 単品のフードメニューが無い場合、単品のドリンクがあるということになる。
+        // 単品のドリンクが限界までリストにあるはずなので、その状態ではフードメニューを割引しても残りの金額では買えない。
+        // よって、ここでは購入不可で終了する。
+        if (
+          ![...singleMenuGachaList].filter(
+            (menu: Menu) => menu.drinkDiscount > 0
+          ).length
+        )
+          break;
+
+        // 単品のフードメニューから、最大の割引額を取得する（割引が無ければ終了）
+        const maxDiscountFood: Menu = [...singleMenuGachaList].sort(
+          (a, b) => b.drinkDiscount - a.drinkDiscount
+        )[0];
+        if (maxDiscountFood.drinkDiscount <= 0) break;
+
+        // 最大の割引額を適用して、残りの金額で買えるドリンクだけに絞る
+        const purchasableMenusWithDiscount = [...menuList].filter(
+          (menu: Menu) =>
+            menu.price - maxDiscountFood.drinkDiscount <= remaining &&
+            (menu.category === "hotdrink" || menu.category === "icedrink")
+        );
+
+        // 購入できるものからランダムにドリンクを選んで追加する。
+        const randomIndex = Math.floor(
+          Math.random() * purchasableMenusWithDiscount.length
+        );
+        const purchasableDrink: Menu = lodash.cloneDeep(
+          purchasableMenusWithDiscount[randomIndex]
+        );
+        purchasableDrink.uuid = ulid();
+
+        // 割引して合計金額に加算
+        total += purchasableDrink.price - maxDiscountFood.drinkDiscount;
+
+        // セットメニューのリストに追加
+        mealMenuGachaList.push(maxDiscountFood);
+        mealMenuGachaList.push(purchasableDrink);
+
+        // 単品メニューのリストから割引したフードを除外
+        singleMenuGachaList = singleMenuGachaList.filter(
+          (menu: Menu) => menu.uuid !== maxDiscountFood.uuid
+        );
+        break;
+      }
 
       // 購入可能なものから、ランダムに１つ選ぶ
       const randomIndex = Math.floor(Math.random() * purchasableMenus.length);
@@ -112,7 +165,8 @@ function App() {
       total += price;
     }
 
-    setGachaList([...mealMenuGachaList, ...singleMenuGachaList]);
+    setSingleMenuGachaList(singleMenuGachaList);
+    setMealMenuGachaList(to2DArray(mealMenuGachaList));
     setTotalPrice(total);
   };
 
@@ -166,27 +220,83 @@ function App() {
         <Button onClick={handleTurnGacha}>ガチャを回す</Button>
         <Text>合計金額：{totalPrice}</Text>
         <List w="full">
-          {gachaList.map((menu: Menu) => (
-            <ListItem
-              key={menu.uuid}
-              borderWidth="1px"
-              p="4"
-              mt="4"
-              bg="white"
-              borderRadius="md"
-              borderColor="gray.300"
-              backgroundColor="#fbd24d"
-            >
-              <Text color="#3d2900">
-                {menu.name} size:{menu.size}
+          {mealMenuGachaList.map((menus: Menu[]) => (
+            <Box bg="#F39B3B" p={4} m={4}>
+              <Text fontSize="xl" color="white">
+                セット -￥{menus[0].drinkDiscount}
               </Text>
-              <Text>{menu.price}</Text>
-            </ListItem>
+              {menus.map((menu: Menu) => (
+                <ListItem
+                  key={menu.uuid}
+                  borderWidth="1px"
+                  p="4"
+                  mt="4"
+                  bg="white"
+                  borderRadius="md"
+                  borderColor="gray.300"
+                >
+                  <Stack>
+                    <HStack>
+                      <IconContext.Provider
+                        value={{ color: "#999", size: "40px" }}
+                      >
+                        {/* <BsCupStraw /> */}
+                        <FiCoffee />
+                      </IconContext.Provider>
+                      <Text paddingLeft={2} color="#3d2900">
+                        {menu.name}
+                      </Text>
+                      <Spacer />
+                      <Text>￥{menu.price}</Text>
+                    </HStack>
+                  </Stack>
+                </ListItem>
+              ))}
+            </Box>
           ))}
         </List>
+        <>
+          {singleMenuGachaList.length !== 0 && (
+            <List w="full">
+              <Box bg="#fbd24d" p={4} m={4}>
+                <Text fontSize="xl" color="white">
+                  単品
+                </Text>
+                {singleMenuGachaList.map((menu: Menu) => (
+                  <ListItem
+                    key={menu.uuid}
+                    borderWidth="1px"
+                    p="4"
+                    mt="4"
+                    bg="white"
+                    borderRadius="md"
+                    borderColor="gray.300"
+                  >
+                    <Stack>
+                      <HStack>
+                        <Text color="#3d2900">{menu.name}</Text>
+                        <Spacer />
+                        <Text>￥{menu.price}</Text>
+                      </HStack>
+                    </Stack>
+                  </ListItem>
+                ))}
+              </Box>
+            </List>
+          )}
+        </>
       </>
     </Container>
   );
+}
+
+function to2DArray(arr: any[]) {
+  return arr.reduce((acc, _, index) => {
+    if (index % 2 === 0) {
+      acc.push(arr.slice(index, index + 2));
+    }
+    return acc;
+  }, []);
 }
 
 export default App;

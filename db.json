@@ -27,13 +27,13 @@
       "name": "ブレンドコーヒー",
       "size": "M",
       "isDiscounted": false,
-      "price": 1200
+      "price": 200
     },
     {
       "id": "3",
       "category": "milano",
       "name": "ミラノサンドA 生ハム・ボンレスハム・ボローニャソーセージ",
-      "price": 900,
+      "price": 350,
       "isDiscounted": false,
       "drinkDiscount": 50
     },
@@ -41,7 +41,7 @@
       "id": "4",
       "category": "milano",
       "name": "ミラノサンドB エビ・サーモン・カマンベール",
-      "price": 1450,
+      "price": 400,
       "isDiscounted": false,
       "drinkDiscount": 50
     }
