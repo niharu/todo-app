@@ -4,7 +4,8 @@ const theme = extendTheme({
   styles: {
     global: {
       body: {
-        // backgroundColor: "orange.50",
+        backgroundColor: "#fbd24d",
+        // backgroundColor: "yello",
         // color: "gray.800",
       },
       p: {
@@ -12,6 +13,11 @@ const theme = extendTheme({
         lineHeight: "tall",
       },
     },
+  },
+  fonts: {
+    // body: `"メイリオ"`,
+    // heading: `cursive,"Hiragino Kaku Gothic ProN"`,
+    // body: `cursive,"Hiragino Kaku Gothic ProN"`,
   },
 });
 

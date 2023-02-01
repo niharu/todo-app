@@ -1,8 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
-
-import { IconContext } from "react-icons";
-import { BsCup, BsCupStraw } from "react-icons/bs";
-import { FiCoffee } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
 
 import * as lodash from "lodash";
 
@@ -14,31 +10,17 @@ import {
   Center,
   Container,
   Heading,
-  HStack,
   List,
   ListItem,
-  Spacer,
   Stack,
   Text,
+  VStack,
 } from "@chakra-ui/react";
-import { AddIcon } from "@chakra-ui/icons";
-
-import { TodoTitle } from "./TodoTitle";
-import { TodoAdd } from "./TodoAdd";
-import { TodoList } from "./TodoList";
-import { useTodo } from "../hooks/useTodo";
 
 import * as menusData from "../apis/menus";
 import { Menu } from "../model/Menu";
 
 function App() {
-  const {
-    todoList,
-    addTodoListItem,
-    toggleTodoListItemStatus,
-    deleteTodoListItem,
-  } = useTodo();
-
   useEffect(() => {
     menusData.getAllMenus().then((menus: Menu[]) => {
       setMenuList(menus);
@@ -170,60 +152,37 @@ function App() {
     setTotalPrice(total);
   };
 
-  const inputEl = useRef<HTMLTextAreaElement>(null);
-
-  const handleAddTodoListItem = () => {
-    const inputValue = inputEl.current?.value;
-    if (!inputValue) return;
-
-    addTodoListItem(inputValue);
-    inputEl.current.value = "";
-  };
-
-  const inCompletedList = todoList.filter((todo) => {
-    return !todo.done;
-  });
-
-  const completedList = todoList.filter((todo) => {
-    return todo.done;
-  });
-
   return (
-    <Container centerContent p={{ base: "4", md: "6" }} maxWidth="3xl">
-      {/* <TodoTitle title="TODO進捗管理" fontSize="2xl" mt="0" />
-
-      <TodoAdd
-        placeholder="ADD TODO"
-        leftIcon={<AddIcon />}
-        buttonText="TODOを追加"
-        inputEl={inputEl}
-        handleAddTodoListItem={handleAddTodoListItem}
-      />
-
-      <TodoList
-        todoList={inCompletedList}
-        toggleTodoListItemStatus={toggleTodoListItemStatus}
-        deleteTodoListItem={deleteTodoListItem}
-        title="未完了TODOリスト"
-        fontSize="xl"
-      />
-
-      <TodoList
-        todoList={completedList}
-        toggleTodoListItemStatus={toggleTodoListItemStatus}
-        deleteTodoListItem={deleteTodoListItem}
-        title="完了TODOリスト"
-        fontSize="xl"
-      /> */}
-
+    <Container
+      centerContent
+      p={{ base: "4", md: "6" }}
+      maxWidth="xl"
+      bg="white"
+    >
       <>
-        <Button onClick={handleTurnGacha}>ガチャを回す</Button>
-        <Text>合計金額：{totalPrice}</Text>
-        <List w="full">
+        <Heading size="2xl" color="#3d2900" paddingTop={2} paddingBottom={8}>
+          ドトール1000円ガチャ
+        </Heading>
+
+        <Button colorScheme="yellow" shadow="md" onClick={handleTurnGacha}>
+          ガチャを回す
+        </Button>
+        {[...mealMenuGachaList, ...singleMenuGachaList].length > 0 && (
+          <Text fontWeight={"bold"} paddingTop={5}>
+            合計：{totalPrice}円
+          </Text>
+        )}
+        <List w="lg">
           {mealMenuGachaList.map((menus: Menu[]) => (
-            <Box bg="#F39B3B" p={4} m={4}>
-              <Text fontSize="xl" color="white">
-                セット -￥{menus[0].drinkDiscount}
+            <Box
+              bg="yellow.100"
+              borderColor={"black"}
+              p={4}
+              m={4}
+              borderRadius="md"
+            >
+              <Text fontSize="lg" color="gray.700" fontWeight={"bold"}>
+                セット {menus[0].drinkDiscount}円引き！
               </Text>
               {menus.map((menu: Menu) => (
                 <ListItem
@@ -231,24 +190,25 @@ function App() {
                   borderWidth="1px"
                   p="4"
                   mt="4"
-                  bg="white"
                   borderRadius="md"
-                  borderColor="gray.300"
+                  backgroundColor={"gray.100"}
+                  shadow="md"
                 >
                   <Stack>
-                    <HStack>
-                      <IconContext.Provider
-                        value={{ color: "#999", size: "40px" }}
-                      >
-                        {/* <BsCupStraw /> */}
-                        <FiCoffee />
-                      </IconContext.Provider>
-                      <Text paddingLeft={2} color="#3d2900">
-                        {menu.name}
-                      </Text>
-                      <Spacer />
-                      <Text>￥{menu.price}</Text>
-                    </HStack>
+                    <Center>
+                      <VStack>
+                        <Text color="#3d2900" fontWeight={"bold"} fontSize="md">
+                          {menu.name}
+                        </Text>
+                        <Text
+                          fontSize="md"
+                          color={"gray.600"}
+                          fontWeight={"bold"}
+                        >
+                          {menu.price}円
+                        </Text>
+                      </VStack>
+                    </Center>
                   </Stack>
                 </ListItem>
               ))}
@@ -257,9 +217,20 @@ function App() {
         </List>
         <>
           {singleMenuGachaList.length !== 0 && (
-            <List w="full">
-              <Box bg="#fbd24d" p={4} m={4}>
-                <Text fontSize="xl" color="white">
+            <List w="lg">
+              <Box
+                // bg="#fbd24d"
+                paddingLeft={4}
+                paddingRight={4}
+                paddingBottom={4}
+                paddingTop={2}
+                // p={4}
+                // m={4}
+                marginLeft={4}
+                marginRight={4}
+                marginBottom={4}
+              >
+                <Text fontSize="lg" color="black" fontWeight={"bold"}>
                   単品
                 </Text>
                 {singleMenuGachaList.map((menu: Menu) => (
@@ -268,16 +239,24 @@ function App() {
                     borderWidth="1px"
                     p="4"
                     mt="4"
-                    bg="white"
+                    // bg="white"
                     borderRadius="md"
-                    borderColor="gray.300"
+                    backgroundColor={"gray.100"}
+                    shadow="md"
                   >
                     <Stack>
-                      <HStack>
-                        <Text color="#3d2900">{menu.name}</Text>
-                        <Spacer />
-                        <Text>￥{menu.price}</Text>
-                      </HStack>
+                      <Center>
+                        <VStack>
+                          <Text
+                            color="#3d2900"
+                            fontWeight={"bold"}
+                            fontSize="md"
+                          >
+                            {menu.name}
+                          </Text>
+                          <Text>{menu.price}円</Text>
+                        </VStack>
+                      </Center>
                     </Stack>
                   </ListItem>
                 ))}
