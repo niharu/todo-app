@@ -156,11 +156,11 @@ function App() {
     <Container
       centerContent
       p={{ base: "4", md: "6" }}
-      maxWidth="xl"
+      maxWidth="lg"
       bg="white"
     >
       <>
-        <Heading size="2xl" color="#3d2900" paddingTop={2} paddingBottom={8}>
+        <Heading size="xl" color="#3d2900" paddingTop={2} paddingBottom={8}>
           ドトール1000円ガチャ
         </Heading>
 
@@ -254,7 +254,13 @@ function App() {
                           >
                             {menu.name}
                           </Text>
-                          <Text>{menu.price}円</Text>
+                          <Text
+                            fontSize="md"
+                            color={"gray.600"}
+                            fontWeight={"bold"}
+                          >
+                            {menu.price}円
+                          </Text>
                         </VStack>
                       </Center>
                     </Stack>
